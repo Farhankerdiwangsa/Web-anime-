@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memuat Detail Anime... | TongDev Stream</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers:wght@400&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  
+  <script>
+    window.tailwind = window.tailwind || {};
+    window.tailwind.config = { darkMode: 'class' };
+    console.warn = function(){};
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <style type="text/tailwindcss">
+    @layer base {
+      body {
+        @apply bg-panel text-textblack font-inter antialiased overflow-x-hidden;
+        background-color: #FFF9E0;
+        color: #000000;
+      }
+    }
+    
+    @keyframes dot-bounce {
+      0%, 100% { 
+        transform: translateY(0);
+      }
+      50% { 
+        transform: translateY(-12px);
+      }
+    }
+
+    .loader-dot {
+      width: 10px;
+      height: 10px;
+      background-color: #FFC300; 
+      border-radius: 50%;
+      animation: dot-bounce 1.4s infinite ease-in-out;
+    }
+    .loader-dot:nth-child(2) {
+      animation-delay: -0.16s;
+    }
+    .loader-dot:nth-child(3) {
+      animation-delay: -0.32s;
+    }
+
+    @layer components {
+      .comic-title-stroke {
+        font-family: 'Bangers', cursive;
+        letter-spacing: 1px;
+        color: #FFD75C !important;
+        text-shadow:
+          2px 2px 0 #000,
+          -2px -2px 0 #000,
+          2px -2px 0 #000,
+          -2px 2px 0 #000,
+          2px 0 0 #000,
+          -2px 0 0 #000,
+          0 2px 0 #000,
+          0 -2px 0 #000,
+          1px 1px 2px rgba(0, 0, 0, 0.6);
+      }
+      
+      .comic-border {
+        @apply border-4 border-textblack;
+      }
+      
+      .comic-shadow {
+        box-shadow: 6px 6px 0px #000000;
+      }
+      
+      .action-button {
+        @apply w-full sm:w-auto flex-1 sm:flex-none bg-panel font-semibold text-base sm:text-lg px-5 py-3 rounded-lg text-textblack tracking-wide transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer;
+        @apply comic-border comic-shadow;
+        @apply hover:scale-[1.05] active:scale-95; 
+      }
+      
+      .action-button:disabled {
+        @apply bg-gray-200 opacity-70 cursor-not-allowed hover:scale-100 active:scale-100;
+        box-shadow: none;
+      }
+      
+      .action-button.active {
+        @apply !bg-mustard !text-black !font-bold !border-textblack;
+        @apply !translate-y-[2px] !scale-95;
+        box-shadow: 2px 2px 0px #000000 !important;
+      }
+    }
+    
+    @layer utilities {
+      .tap-highlight-transparent {
+        -webkit-tap-highlight-color: transparent;
+      }
+    }
+  </style>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            mustard: '#FFC300',
+            panel: '#FFF9E0', 
+            textblack: '#000000', 
+          },
+          fontFamily: {
+            bangers: ['Bangers', 'cursive'],
+            inter: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-panel text-textblack font-inter">
+
+  <div id="error-state" class="fixed inset-0 bg-black/50 z-50 flex justify-center items-center p-4 hidden backdrop-blur-sm">
+    <div class="bg-panel comic-border comic-shadow rounded-md p-8 sm:p-12 text-center max-w-md w-full">
+      <div class="text-7xl sm:text-9xl">🚫</div>
+      <h2 class="comic-title-stroke text-5xl sm:text-6xl text-mustard mt-4">
+        Oops! Gagal Muat!
+      </h2>
+      <div id="error-message-text" class="font-inter text-xl sm:text-2xl mt-6 text-textblack">
+        Tidak bisa memuat data. Coba lagi nanti, ya!
+      </div>
+      <button id="retry-button" class="mt-10 bg-mustard font-bangers text-3xl px-10 py-3 comic-border rounded-md comic-shadow text-textblack comic-title-stroke tracking-wider transition-transform duration-200 hover:scale-105 active:scale-95">
+        Coba Lagi
+      </button>
+    </div>
+  </div>
+
+  <div id="main-content" class="hidden min-h-screen">
+    
+    <header id="navbar" class="bg-mustard comic-border border-b-8 p-3 sm:p-4 md:p-6 shadow-lg sticky top-0 z-40 flex items-center justify-center relative">
+      <button onclick="history.back()" class="absolute left-4 top-1/2 -translate-y-1/2 bg-panel hover:bg-white text-textblack rounded-md w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center transition-all comic-border comic-shadow hover:scale-105 active:scale-95" aria-label="Kembali">
+        <i class="fa-solid fa-arrow-left sm:text-xl"></i>
+      </button>
+      <a href="index.html" class="comic-title-stroke text-4xl sm:text-5xl text-mustard text-center tap-highlight-transparent">
+        TongDev | Stream
+      </a>
+    </header>
+
+    <div id="dots-loader" class="flex justify-center items-center min-h-[80vh]">
+        <div class="flex space-x-2">
+            <div class="loader-dot"></div>
+            <div class="loader-dot"></div>
+            <div class="loader-dot"></div>
+        </div>
+    </div>
+
+    <main id="anime-detail-container" class="opacity-0 transition-opacity duration-500">
+      
+      <section id="hero-section" class="relative w-full min-h-[60vh] md:min-h-[70vh] bg-gray-900 flex items-center justify-center overflow-hidden">
+        
+      </section>
+
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
+
+        <section id="action-buttons-container" class="mt-8 sm:mt-12 bg-panel comic-border comic-shadow rounded-lg p-4 sm:p-6 min-h-[80px] flex items-center justify-center">
+          <p class="font-inter text-center text-textblack py-2">Memuat tombol aksi...</p>
+          
+        </section>
+
+        <section id="info-section" class="bg-panel comic-border comic-shadow rounded-lg mt-8 p-6 sm:p-8 min-h-[150px] transition-all duration-200 hover:scale-[1.01] hover:-rotate-[0.5deg]">
+          <p class="font-inter text-center text-textblack">Memuat info...</p>
+          
+        </section>
+
+        <section class="mt-8">
+          <h2 class="text-3xl font-bangers text-textblack mb-4 tracking-wide">Sinopsis</h2>
+          <div id="sinopsis-section" class="bg-panel comic-border comic-shadow rounded-lg p-6 sm:p-8 min-h-[150px] transition-all duration-200 hover:scale-[1.01] hover:rotate-[0.5deg]">
+            <p id="sinopsis-text" class="font-inter text-base text-textblack text-left leading-relaxed">
+              
+            </p>
+          </div>
+        </section>
+        
+        <section class="mt-8">
+          <h2 class="text-3xl font-bangers text-textblack mb-4 tracking-wide">Daftar Episode</h2>
+          <div id="episodes-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 min-h-[150px]">
+            <p class="font-inter text-center text-textblack col-span-full">Memuat daftar episode...</p>
+            
+          </div>
+        </section>
+      
+      </div> 
+
+    </main> 
+    
+  </div> 
+  
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+    import {
+        getAuth, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+    import { 
+        getDatabase, ref, get, set, remove, onValue, off, serverTimestamp 
+    } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDDwVSn_7EYluIaFjyqZcg2aFjpEiNbEiw",
+        authDomain: "web-anime-f8aab.firebaseapp.com",
+        databaseURL: "https://web-anime-f8aab-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "web-anime-f8aab",
+        storageBucket: "web-anime-f8aab.appspot.com",
+        messagingSenderId: "745149903589",
+        appId: "1:745149903589:web:212faa7ba522644ccf1a0c",
+        measurementId: "G-B81VMWHBN9"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    const API_BASE_URL = "https://backend.syaii.my.id/api/anime?url=";
+    let currentUser = null;
+    let currentAnimeData = null;
+    let currentAnimeUrl = null;
+    let currentAnimeId = null;
+    let firebaseListeners = []; 
+
+    const errorState = document.getElementById('error-state');
+    const errorMessageText = document.getElementById('error-message-text');
+    const mainContent = document.getElementById('main-content');
+    const retryButton = document.getElementById('retry-button');
+    const detailContainer = document.getElementById('anime-detail-container');
+    const dotsLoader = document.getElementById('dots-loader');
+
+    function showError(message = "Tidak bisa memuat data. Coba lagi nanti, ya!") {
+      dotsLoader?.classList.add('hidden');
+      errorState.classList.remove('hidden');
+      mainContent.classList.add('hidden');
+      errorMessageText.textContent = message;
+      
+      errorState.style.opacity = 0;
+      errorState.style.transform = 'scale(0.9)';
+      setTimeout(() => {
+          errorState.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+          errorState.style.opacity = 1;
+          errorState.style.transform = 'scale(1)';
+      }, 50);
+    }
+
+    function showContent() {
+      dotsLoader?.classList.add('hidden');
+      errorState.classList.add('hidden');
+      mainContent.classList.remove('hidden');
+      detailContainer.classList.remove('opacity-0');
+      detailContainer.classList.add('opacity-100');
+    }
+
+    function generateAnimeId(url) {
+      try {
+        return btoa(url).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+      } catch (e) {
+        return url.replace(/[^a-zA-Z0-9]/g, '_');
+      }
+    }
+
+    async function loadAnimeDetail(animeUrl) {
+      if (!animeUrl) {
+        showError("URL anime tidak ditemukan. Coba kembali dari halaman utama.");
+        return;
+      }
+      
+      currentAnimeUrl = animeUrl;
+      currentAnimeId = generateAnimeId(animeUrl);
+      
+      try {
+        const response = await fetch(API_BASE_URL + encodeURIComponent(animeUrl));
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        
+        if (!data || !data.title) {
+          throw new Error("Respon API tidak valid atau tidak lengkap.");
+        }
+
+        currentAnimeData = data;
+        
+        renderHero(data);
+        renderActionButtons(currentUser); 
+        renderInfo(data);
+        renderSinopsis(data);
+        renderEpisodes(data);
+        
+        document.title = `${data.title} | TongDev Stream`;
+
+        if (currentUser) {
+          attachFirebaseListeners(currentUser.uid, currentAnimeId);
+        }
+
+        showContent(); 
+
+      } catch (error) {
+        console.error("Error loading anime detail:", error);
+        showError(error.message || "Gagal memuat detail anime.");
+      }
+    }
+
+    function renderHero(data) {
+      const heroSection = document.getElementById('hero-section');
+      const placeholderImg = 'https://placehold.co/400x600/FFF9E0/000?text=TongDev';
+      const bgUrl = data.imageUrl || placeholderImg;
+      
+      heroSection.innerHTML = `
+        <img src="${bgUrl}" alt="Background" class="absolute inset-0 w-full h-full object-cover filter blur-xl scale-110" onerror="this.src='${placeholderImg}'">
+        <div class="absolute inset-0 w-full h-full bg-black/60 backdrop-blur-sm"></div>
+        
+        <div class="relative z-10 w-full h-full p-4 sm:p-8 md:p-12 flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8 lg:gap-12 max-w-6xl mx-auto">
+          
+          <img src="${bgUrl}" alt="${data.title || 'Poster'}" 
+               class="w-48 sm:w-56 md:w-64 lg:w-72 flex-shrink-0 aspect-[2/3] object-cover rounded-md shadow-lg comic-border comic-shadow" 
+               onerror="this.src='${placeholderImg}'">
+          
+          <div class="flex-1 text-center md:text-left w-full">
+            <h1 class="comic-title-stroke text-4xl sm:text-5xl lg:text-6xl text-mustard break-words whitespace-normal" title="${data.title || 'Judul Anime'}">
+              ${data.title || 'Judul Anime'}
+            </h1>
+            
+            ${data.score ? `
+            <div class="mt-4 inline-block bg-black/50 border-2 border-white/50 rounded-lg px-4 py-2">
+              <span class="font-bangers text-3xl text-mustard tracking-wider">${data.score.split(' ')[0]}</span>
+              <span class="font-inter font-bold text-lg text-white"> / 10.00</span>
+            </div>
+            ` : ''}
+
+            <div class="mt-4 flex flex-wrap gap-3 justify-center md:justify-start">
+              ${(data.genres || []).map(genre => `
+                <span class="bg-mustard text-textblack font-bangers text-lg px-4 py-1 rounded-md comic-border comic-shadow transition-transform duration-200 hover:scale-[1.08] active:scale-95 cursor-default">
+                  ${genre}
+                </span>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderActionButtons(user) {
+      const container = document.getElementById('action-buttons-container');
+      if (user) {
+        container.innerHTML = `
+          <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full">
+            <button id="fav-btn" class="action-button" data-action="favorites">
+              <i class="fa-solid fa-star"></i>
+              <span>Favorit</span>
+            </button>
+            <button id="save-btn" class="action-button" data-action="saved">
+              <i class="fa-solid fa-save"></i>
+              <span>Simpan</span>
+            </button>
+            <button id="finish-btn" class="action-button" data-action="finished">
+              <i class="fa-solid fa-check"></i>
+              <span>Tamat</span>
+            </button>
+          </div>
+        `;
+        container.querySelectorAll('.action-button').forEach(button => {
+          button.addEventListener('click', handleActionButtonClick);
+        });
+      } else {
+        container.innerHTML = `
+          <div class="flex flex-col sm:flex-row gap-3 items-center justify-between w-full">
+            <p class="font-inter text-lg text-textblack text-center sm:text-left">
+              Login untuk menyimpan ke daftarmu!
+            </p>
+            <a href="auth.html" class="action-button !bg-mustard !text-black !font-bangers !text-2xl sm:!text-3xl tracking-wider !w-full sm:!w-auto hover:!scale-105 active:!scale-95">
+              <i class="fa-solid fa-right-to-bracket"></i>
+              <span>Login Dulu</span>
+            </a>
+          </div>
+        `;
+      }
+    }
+
+    function renderInfo(data) {
+      const container = document.getElementById('info-section');
+      
+      const renderInfoItem = (label, value) => {
+        if (!value || value === "-") return '';
+        return `
+          <div class="flex flex-col">
+            <span class="font-bangers text-xl text-mustard tracking-wide">${label}</span>
+            <span class="font-inter font-semibold text-textblack text-base">${value}</span>
+          </div>
+        `;
+      };
+
+      container.innerHTML = `
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-6">
+          ${renderInfoItem('Tipe', data.type)}
+          ${renderInfoItem('Status', data.status)}
+          ${renderInfoItem('Rating', data.ratingInfo)}
+          ${renderInfoItem('Studio', data.studio)}
+          ${renderInfoItem('Rilis', data.releaseDate)}
+          ${renderInfoItem('Durasi', data.duration)}
+          ${renderInfoItem('Anggota', data.members)}
+          ${renderInfoItem('Total Episode', data.episodes)}
+        </div>
+      `;
+    }
+
+    function renderSinopsis(data) {
+      const textElement = document.getElementById('sinopsis-text');
+      textElement.textContent = data.synopsis || 'Sinopsis tidak tersedia.';
+      textElement.classList.add('text-textblack');
+    }
+
+    function renderEpisodes(data) {
+      const container = document.getElementById('episodes-list');
+      const episodes = data.episodesList || [];
+      const thumbnail = data.imageUrl || 'https://placehold.co/1600x900/FFF9E0/000?text=TongDev'; 
+
+      if (episodes.length === 0) {
+        container.innerHTML = '<p class="font-inter text-center text-textblack col-span-full">Belum ada episode yang tersedia.</p>';
+        return;
+      }
+
+      container.innerHTML = episodes.map(episode => {
+        const episodeUrl = episode.url;
+        const episodeTitle = episode.title || 'Episode';
+        const redirectUrl = `episod.html?url=${encodeURIComponent(episodeUrl)}`;
+
+        return `
+          <a href="${redirectUrl}" class="block relative aspect-[16/9] bg-panel comic-border comic-shadow rounded-lg overflow-hidden group transition-all duration-300 hover:scale-105 hover:rotate-1 hover:shadow-xl cursor-pointer tap-highlight-transparent">
+            
+            <img src="${thumbnail}" alt="Thumbnail for ${episodeTitle}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" onerror="this.src='https://placehold.co/1600x900/FFF9E0/000?text=Error'">
+            
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+            
+            <h3 class="font-bangers text-3xl text-white tracking-wide break-words whitespace-normal absolute bottom-3 left-4 right-4 z-10" style="text-shadow: 2px 2px 2px #000;">
+              ${episodeTitle}
+            </h3>
+            
+            <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-20">
+              <span class="bg-mustard font-bangers text-3xl sm:text-4xl px-6 py-3 rounded-md comic-border comic-shadow comic-title-stroke tracking-wider">
+                <i class="fa-solid fa-play mr-2"></i> Tonton!
+              </span>
+            </div>
+          </a>
+        `;
+      }).join('');
+    }
+
+    async function handleActionButtonClick(event) {
+      if (!currentUser || !currentAnimeData || !currentAnimeId) {
+        window.location.href = 'auth.html';
+        return;
+      }
+
+      const button = event.currentTarget;
+      const action = button.dataset.action; 
+      if (!action) return;
+
+      button.disabled = true; 
+
+      const { title, imageUrl } = currentAnimeData;
+      const detailUrl = currentAnimeUrl;
+      const animePayload = {
+        title: title || "Judul Tidak Ditemukan",
+        image: imageUrl || "https://placehold.co/400x600/FFF9E0/000?text=?",
+        detailUrl: detailUrl,
+        addedAt: new Date().toISOString()
+      };
+      
+      if (action === 'finished') {
+        delete animePayload.addedAt;
+        animePayload.finishedAt = new Date().toISOString();
+      }
+
+      const dataRef = ref(db, `users/${currentUser.uid}/${action}/${currentAnimeId}`);
+
+      try {
+        const snapshot = await get(dataRef);
+        
+        if (snapshot.exists()) {
+          await remove(dataRef);
+        } else {
+          await set(dataRef, animePayload);
+        }
+        
+      } catch (error) {
+        console.error(`Gagal update Firebase untuk ${action}:`, error);
+        console.error(`Oops, gagal menyimpan ke ${action}. Coba lagi.`);
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    function attachFirebaseListeners(uid, animeId) {
+      detachFirebaseListeners();
+      
+      const actions = ['favorites', 'saved', 'finished'];
+      
+      actions.forEach(action => {
+        const buttonId = {
+          favorites: 'fav-btn',
+          saved: 'save-btn',
+          finished: 'finish-btn'
+        }[action];
+        
+        const dataRef = ref(db, `users/${uid}/${action}/${animeId}`);
+        
+        const listener = onValue(dataRef, (snapshot) => {
+          const button = document.getElementById(buttonId);
+          if (button) {
+            if (snapshot.exists()) {
+              button.classList.add('active');
+            } else {
+              button.classList.remove('active');
+            }
+          }
+        });
+        
+        firebaseListeners.push({ ref: dataRef, listener: listener });
+      });
+    }
+
+    function detachFirebaseListeners() {
+      firebaseListeners.forEach(({ ref, listener }) => {
+        off(ref, 'value', listener);
+      });
+      firebaseListeners = []; 
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      mainContent.classList.remove('hidden');
+
+      const params = new URLSearchParams(window.location.search);
+      const animeUrlToLoad = params.get('url');
+
+      onAuthStateChanged(auth, (user) => {
+        currentUser = user; 
+        
+        if (currentAnimeData) {
+          renderActionButtons(user);
+          if (user && currentAnimeId) {
+            attachFirebaseListeners(user.uid, currentAnimeId);
+          } else {
+            detachFirebaseListeners();
+          }
+        }
+      });
+
+      loadAnimeDetail(animeUrlToLoad);
+      
+      retryButton.addEventListener('click', () => {
+        errorState.style.transition = 'opacity 0.3s ease-in, transform 0.3s ease-in';
+        errorState.style.opacity = 0;
+        errorState.style.transform = 'scale(0.8)';
+        setTimeout(() => {
+          errorState.style.display = 'none';
+          errorState.style.opacity = 1;
+          errorState.style.transform = 'scale(1)';
+          errorState.style.transition = '';
+          loadAnimeDetail(currentAnimeUrl);
+        }, 300);
+      });
+    });
+
+  </script>
+</body>
+</html>
